@@ -1,4 +1,5 @@
-import sys
+import argparse
+
 
 def analyze_log(path: str, keyword: str = "ERROR") -> int:
     count = 0
@@ -9,11 +10,33 @@ def analyze_log(path: str, keyword: str = "ERROR") -> int:
     return count
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="log-analyzer",
+        description="Scan a log file and count lines containing a keyword.",
+        epilog="Example: python analyzer.py sample.log --keyword ERROR",
+    )
+    parser.add_argument(
+        "logfile",
+        help="Path to the log file to analyze",
+    )
+    parser.add_argument(
+        "-k",
+        "--keyword",
+        default="ERROR",
+        help="Keyword to search for (default: ERROR)",
+    )
+    return parser
+
+
+def main() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+
+    result = analyze_log(args.logfile, args.keyword)
+    print(f"Total '{args.keyword}' occurrences: {result}")
+    return 0
+
+
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python analyzer.py <logfile> [keyword]")
-    else:
-        log_path = sys.argv[1]
-        keyword = sys.argv[2] if len(sys.argv) > 2 else "ERROR"
-        result = analyze_log(log_path, keyword)
-        print(f"Total '{keyword}' occurrences: {result}")
+    raise SystemExit(main())
