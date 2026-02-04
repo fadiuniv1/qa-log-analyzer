@@ -1,0 +1,4 @@
+INFO app started
+ERROR database not found
+INFO retrying
+ERROR timeout
