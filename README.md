@@ -8,9 +8,22 @@ Small CLI tool that scans a log file and counts lines containing a keyword (defa
 python analyzer.py sample.log
 ```
 ## Use a custom keyword
+
 ```bash
 python analyzer.py sample.log --keyword WARNING
 ```
+## Severity summary
+
+```bash
+python analyzer.py sample.log --summary
+
+````
+ JSON output:
+````
+python analyzer.py sample.log --summary --json
+
+````
+
 ## Help
 ```bash
 python analyzer.py -h
