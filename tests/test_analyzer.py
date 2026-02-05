@@ -1,4 +1,4 @@
-from analyzer import count_keyword, severity_summary
+from analyzer import count_keyword, severity_summary, group_messages
 import tempfile
 import os
 
@@ -40,5 +40,15 @@ def test_severity_summary_counts_levels():
         assert summary["WARNING"] == 1
         assert summary["ERROR"] == 1
         assert summary["CRITICAL"] == 1
+    finally:
+        os.remove(path)
+def test_grouping_top_limit():
+    content = "ERROR A\nERROR A\nERROR B\n"
+    path = _tempfile_with(content)
+    try:
+        groups = group_messages(path, top_n=1)
+        assert len(groups) == 1
+        assert groups[0][0] == 2      # count
+        assert "ERROR A" in groups[0][1]
     finally:
         os.remove(path)
