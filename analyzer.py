@@ -20,8 +20,15 @@ def iter_lines(path: str):
             yield line.rstrip("\n")
 
 
-def count_keyword(path: str, keyword: str) -> int:
-    return sum(1 for line in iter_lines(path) if keyword in line)
+def count_pattern(path: str, pattern: str, use_regex: bool = False, ignore_case: bool = False) -> int:
+    if use_regex:
+        flags = re.IGNORECASE if ignore_case else 0
+        rx = re.compile(pattern, flags)
+        return sum(1 for line in iter_lines(path) if rx.search(line))
+    if ignore_case:
+        pattern_lower = pattern.lower()
+        return sum(1 for line in iter_lines(path) if pattern_lower in line.lower())
+    return sum(1 for line in iter_lines(path) if pattern in line)
 
 
 def severity_summary(path: str, levels=DEFAULT_LEVELS) -> dict:
@@ -94,10 +101,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("logfile", help="Path to the log file to analyze. Use '-' to read from STDIN.")
     mode = p.add_mutually_exclusive_group()
-    mode.add_argument("-k", "--keyword", default=None, help="Keyword to search for (default: ERROR when used without flags)")
+    mode.add_argument(
+        "-k",
+        "--keyword",
+        default=None,
+        help="Keyword to search for (default: ERROR when used without flags)",
+    )
     mode.add_argument("-s", "--summary", action="store_true", help="Show severity summary (DEBUG/INFO/WARNING/ERROR/CRITICAL)")
     mode.add_argument("--group", action="store_true", help="Group similar messages and show top N")
     p.add_argument("--top", type=int, default=10, help="Top N groups to show (used with --group)")
+    p.add_argument("--regex", action="store_true", help="Treat the keyword as a regular expression")
+    p.add_argument("-i", "--ignore-case", action="store_true", help="Case-insensitive keyword/regex matching")
     p.add_argument("--json", action="store_true", help="Output as JSON (useful for automation/CI)")
     return p
 
@@ -131,7 +145,11 @@ def main() -> int:
 
     # Keyword mode (default behavior)
     keyword = args.keyword if args.keyword is not None else "ERROR"
-    count = count_keyword(args.logfile, keyword)
+    try:
+        count = count_pattern(args.logfile, keyword, use_regex=args.regex, ignore_case=args.ignore_case)
+    except re.error as exc:
+        print(f"Invalid regex: {exc}", file=sys.stderr)
+        return 2
     if args.json:
         print(json.dumps({"keyword": keyword, "count": count}, indent=2))
     else:

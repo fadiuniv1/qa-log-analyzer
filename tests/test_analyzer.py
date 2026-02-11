@@ -1,4 +1,4 @@
-from analyzer import count_keyword, severity_summary, group_messages
+from analyzer import count_pattern, severity_summary, group_messages
 import tempfile
 import os
 
@@ -14,7 +14,7 @@ def test_count_keyword_default_like_error():
     content = "INFO ok\nERROR one\nERROR two\n"
     path = _tempfile_with(content)
     try:
-        assert count_keyword(path, "ERROR") == 2
+        assert count_pattern(path, "ERROR") == 2
     finally:
         os.remove(path)
 
@@ -23,7 +23,7 @@ def test_custom_keyword():
     content = "INFO ok\nFOO first\nFOO second\n"
     path = _tempfile_with(content)
     try:
-        assert count_keyword(path, "FOO") == 2
+        assert count_pattern(path, "FOO") == 2
     finally:
         os.remove(path)
 
@@ -40,6 +40,15 @@ def test_severity_summary_counts_levels():
         assert summary["WARNING"] == 1
         assert summary["ERROR"] == 1
         assert summary["CRITICAL"] == 1
+    finally:
+        os.remove(path)
+
+
+def test_regex_ignore_case():
+    content = "INFO Start\nerror one\nError two\n"
+    path = _tempfile_with(content)
+    try:
+        assert count_pattern(path, r"error", use_regex=True, ignore_case=True) == 2
     finally:
         os.remove(path)
 def test_grouping_top_limit():
