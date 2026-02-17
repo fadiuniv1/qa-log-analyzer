@@ -1,6 +1,15 @@
-from analyzer import count_pattern, severity_summary, group_messages, file_stats
+from analyzer import (
+    count_pattern,
+    severity_summary,
+    group_messages,
+    file_stats,
+    _parse_exit_codes,
+    _schema_for,
+    _format_table,
+)
 import tempfile
 import os
+from datetime import datetime
 
 
 def _tempfile_with(content: str) -> str:
@@ -105,3 +114,39 @@ def test_file_stats():
         assert stats["unique_lines"] == 3
     finally:
         os.remove(path)
+
+
+def test_time_filtering_and_untimestamped():
+    content = (
+        "2026-02-16 10:00:00 INFO a\n"
+        "2026-02-17 10:00:00 ERROR b\n"
+        "no ts ERROR\n"
+    )
+    path = _tempfile_with(content)
+    try:
+        since = datetime.fromisoformat("2026-02-17T00:00:00")
+        assert count_pattern(path, "ERROR", since=since) == 1
+        assert count_pattern(path, "ERROR", since=since, include_untimestamped=True) == 2
+    finally:
+        os.remove(path)
+
+
+def test_parse_exit_codes():
+    mapping = _parse_exit_codes("ERROR=2,CRITICAL=3")
+    assert mapping["ERROR"] == 2
+    assert mapping["CRITICAL"] == 3
+
+
+def test_schema_group_shape():
+    schema = _schema_for("group")
+    assert schema["type"] == "array"
+    assert "items" in schema
+
+
+def test_format_table_basic():
+    table = _format_table(["a", "b"], [[1, "two"]])
+    lines = table.splitlines()
+    assert lines[0].startswith("a")
+    assert "b" in lines[0]
+    assert "1" in lines[2]
+    assert "two" in lines[2]
