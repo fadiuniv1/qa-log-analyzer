@@ -90,6 +90,21 @@ python analyzer.py sample.log --summary --schema
 python analyzer.py sample.log --group --schema
 ```
 
+Continuous Integration
+The summary command returns a non-zero status when ERROR or CRITICAL lines are present, so it can gate a build on its own:
+
+```bash
+python analyzer.py build.log --summary --format json > report.json
+```
+
+Use `--exit-codes` to choose which levels fail the job and with which status:
+
+```bash
+python analyzer.py build.log --summary --exit-codes ERROR=1,CRITICAL=2
+```
+
+A status of 2 is reserved for invalid arguments or unreadable input; any other configured status comes only from matched log levels.
+
 Run Tests
 ```bash
 python -m pytest -v
