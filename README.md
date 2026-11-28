@@ -105,6 +105,17 @@ python analyzer.py build.log --summary --exit-codes ERROR=1,CRITICAL=2
 
 A status of 2 is reserved for invalid arguments or unreadable input; any other configured status comes only from matched log levels.
 
+Shell Completion (optional)
+Version 0.2.0 can generate tab-completion scripts using `shtab` by Casper da Costa-Luis (@casperdcl) under the tqdm project: https://github.com/tqdm/shtab. The analyzer itself has no runtime dependencies; install shtab only if you want completion:
+
+```bash
+pip install shtab
+python analyzer.py --print-completion bash > ~/.bash_completion/log-analyzer
+source ~/.bash_completion/log-analyzer
+```
+
+Supported shells are shown by `--print-completion --help`. File paths are completed for the logfile argument, and `--format` completes from its preset choices. Without shtab installed, the flag prints an installation hint. Use `--version` to check the installed version.
+
 Run Tests
 ```bash
 python -m pytest -v

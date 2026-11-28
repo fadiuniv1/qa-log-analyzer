@@ -7,7 +7,16 @@ from collections import Counter
 from datetime import datetime
 from typing import Iterable, List, Optional, Tuple
 
+__version__ = "0.2.0"
+
 DEFAULT_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
+
+
+class _MissingShtabAction(argparse.Action):
+    """Give a useful error when completions are requested without shtab."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser.error("--print-completion requires shtab: pip install shtab")
 
 
 _date_time_re = re.compile(
@@ -315,7 +324,10 @@ def build_parser() -> argparse.ArgumentParser:
         description="Analyze a log file: count keyword occurrences, produce a severity summary, or group similar messages.",
         epilog="Examples: python analyzer.py sample.log --keyword ERROR | python analyzer.py sample.log --summary --json | cat app.log | python analyzer.py - --group --top 5",
     )
-    p.add_argument("logfile", help="Path to the log file to analyze. Use '-' to read from STDIN.")
+    logfile_action = p.add_argument(
+        "logfile", help="Path to the log file to analyze. Use '-' to read from STDIN."
+    )
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     mode = p.add_mutually_exclusive_group()
     mode.add_argument(
         "-k",
@@ -352,6 +364,25 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output format preset (text, json, table). Overrides --json.",
     )
     p.add_argument("--json", action="store_true", help="Output as JSON (useful for automation/CI)")
+
+    # Optional tab completion. shtab stays an optional dependency: the core
+    # analyzer works exactly as before when it is not installed.
+    try:
+        import shtab
+    except ImportError:
+        shtab = None
+    if shtab is None:
+        p.add_argument(
+            "--print-completion",
+            nargs="?",
+            const="",
+            metavar="SHELL",
+            action=_MissingShtabAction,
+            help="print shell completion script (requires shtab)",
+        )
+    else:
+        shtab.add_argument_to(p, "--print-completion", help="print shell completion script")
+        logfile_action.complete = shtab.FILE
     return p
 
 
