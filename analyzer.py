@@ -371,10 +371,7 @@ def build_parser() -> argparse.ArgumentParser:
         import shtab
     except ImportError:
         shtab = None
-    if shtab is not None:
-        shtab.add_argument_to(p, "--print-completion", help="print shell completion script")
-        logfile_action.complete = shtab.FILE
-    else:
+    if shtab is None:
         p.add_argument(
             "--print-completion",
             nargs="?",
@@ -383,6 +380,9 @@ def build_parser() -> argparse.ArgumentParser:
             action=_MissingShtabAction,
             help="print shell completion script (requires shtab)",
         )
+    else:
+        shtab.add_argument_to(p, "--print-completion", help="print shell completion script")
+        logfile_action.complete = shtab.FILE
     return p
 
 
